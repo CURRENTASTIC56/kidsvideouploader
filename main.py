@@ -1,20 +1,27 @@
-from story_generator import generate_story
+# main.py
+from story_generator import generate_story, split_story
 from tts_engine import text_to_speech
-from video_creator import create_video
+from video_creator import create_scene_clip, create_final_video
+from image_generator import generate_image
 from youtube_uploader import upload_to_youtube
 import os
 
-os.makedirs("output", exist_ok=True)
+def main():
+    story = generate_story()
+    scenes = split_story(story)
 
-STORY_FILE = "output/story.txt"
-AUDIO_FILE = "output/story_audio.mp3"
-VIDEO_FILE = "output/final_video.mp4"
-IMAGE_PATH = "assets/background.jpg"
+    os.makedirs("output/scenes", exist_ok=True)
 
-story = generate_story()
-with open(STORY_FILE, "w") as f:
-    f.write(story)
+    video_paths = []
+    for idx, scene in enumerate(scenes):
+        print(f"Processing scene {idx + 1}/{len(scenes)}")
+        image = generate_image(scene, idx)
+        audio = text_to_speech(scene, idx)
+        clip = create_scene_clip(image, audio, idx)
+        video_paths.append(clip)
 
-text_to_speech(story, AUDIO_FILE)
-create_video(AUDIO_FILE, IMAGE_PATH, VIDEO_FILE)
-upload_to_youtube(VIDEO_FILE, title="Daily AI Kids Story")
+    create_final_video(video_paths)
+    upload_to_youtube("output/final_video.mp4", title="AI Kids Story - Scene Visuals")
+
+if __name__ == "__main__":
+    main()
