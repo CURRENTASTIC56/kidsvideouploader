@@ -1,27 +1,40 @@
-# main.py
-from story_generator import generate_story, split_story
-from tts_engine import text_to_speech
-from video_creator import create_scene_clip, create_final_video
-from image_generator import generate_image
-from youtube_uploader import upload_to_youtube
 import os
+from story_generator import generate_story
+from image_generator import generate_image
+from video_generator import generate_video
+from tts_generator import generate_narration
+from title_description_generator import generate_title_and_description
+
+def split_story_into_scenes(story, scene_count=20):
+    sentences = [s.strip() for s in story.split('.') if s.strip()]
+    return sentences[:scene_count]
 
 def main():
+    print("Generating story...")
     story = generate_story()
-    scenes = split_story(story)
+    scenes = split_story_into_scenes(story)
 
-    os.makedirs("output/scenes", exist_ok=True)
+    image_paths = []
+    print("Generating images...")
+    for i, scene in enumerate(scenes):
+        image_path = f"outputs/scene_{i}.png"
+        generate_image(scene, image_path)
+        image_paths.append(image_path)
 
-    video_paths = []
-    for idx, scene in enumerate(scenes):
-        print(f"Processing scene {idx + 1}/{len(scenes)}")
-        image = generate_image(scene, idx)
-        audio = text_to_speech(scene, idx)
-        clip = create_scene_clip(image, audio, idx)
-        video_paths.append(clip)
+    print("Generating narration...")
+    narration_path = "outputs/narration.mp3"
+    generate_narration(story, narration_path)
 
-    create_final_video(video_paths)
-    upload_to_youtube("output/final_video.mp4", title="AI Kids Story - Scene Visuals")
+    print("Generating video...")
+    generate_video(image_paths, narration_path)
+
+    print("Generating title and description...")
+    title, description = generate_title_and_description(story)
+
+    print("✅ Done!")
+    print("Title:", title)
+    print("Description:\n", description)
 
 if __name__ == "__main__":
+    os.makedirs("outputs", exist_ok=True)
     main()

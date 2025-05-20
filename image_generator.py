@@ -1,20 +1,19 @@
-# image_generator.py
-import os
 from diffusers import StableDiffusionPipeline
 import torch
+import os
 
-# Load model once (slow on CPU)
-pipe = StableDiffusionPipeline.from_pretrained(
-    "CompVis/stable-diffusion-v1-4",
-    revision="fp16",
-    torch_dtype=torch.float16,
-    use_auth_token=True
-)
-pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
+def generate_image(prompt, output_path="generated_image.png"):
+    # Load the pipeline with CPU settings
+    pipe = StableDiffusionPipeline.from_pretrained(
+        "CompVis/stable-diffusion-v1-4",
+        revision="fp32",  # Make sure it loads fp32 weights
+        torch_dtype=torch.float32,
+    )
 
-def generate_image(prompt, index):
-    os.makedirs("output/images", exist_ok=True)
+    pipe = pipe.to("cpu")  # Ensure running on CPU
+
+    # Generate the image
     image = pipe(prompt).images[0]
-    path = f"output/images/scene_{index}.png"
-    image.save(path)
-    return path
+    image.save(output_path)
+
+    return output_path
